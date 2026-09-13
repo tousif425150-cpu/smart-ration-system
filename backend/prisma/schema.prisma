@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique @db.VarChar(50)
+  passwordHash String     @db.VarChar(255)
+  fullName     String     @db.VarChar(150)
+  email        String?    @unique @db.VarChar(150)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+
+  @@map("admin")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  adminId    Int?
+  action     String   @db.VarChar(100)
+  targetType String   @db.VarChar(50)
+  targetId   Int?
+  details    String?  @db.Text
+  ipAddress  String?  @db.VarChar(50)
+  createdAt  DateTime @default(now())
+  admin      Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@map("auditlog")
+}
+
+model Family {
+  id              Int              @id @default(autoincrement())
+  familyId        String           @unique @db.VarChar(30)
+  headName        String           @db.VarChar(150)
+  mobileNumber    String           @db.VarChar(20)
+  address         String           @db.Text
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  members         FamilyMember[]
+  riceEntitlement RiceEntitlement?
+  distributions   RiceDistribution[]
+  notifications   Notification[]
+
+  @@map("family")
+}
+
+model FamilyMember {
+  id                    Int           @id @default(autoincrement())
+  memberId              String        @unique @db.VarChar(30)
+  familyId              Int
+  family                Family        @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  name                  String        @db.VarChar(150)
+  age                   Int?
+  relation              String        @db.VarChar(50)
+  dateOfBirth           DateTime?
+  gender                String?       @db.VarChar(10)
+  profilePhotoPath      String?       @db.VarChar(500)
+  isFamilyHead          Boolean       @default(false)
+  accountStatus         String        @default("ACTIVE") @db.VarChar(20)
+  faceEnrollmentStatus  String        @default("NOT_ENROLLED") @db.VarChar(20)
+  user                  User?
+  faceProfile           FaceProfile?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@map("familymember")
+}
+
+model User {
+  id              Int           @id @default(autoincrement())
+  username        String        @unique @db.VarChar(50)
+  passwordHash    String        @db.VarChar(255)
+  role            String        @default("USER") @db.VarChar(20)
+  familyMemberId  Int?          @unique
+  familyMember    FamilyMember? @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  fcmToken        String?       @db.VarChar(500)
+  lastLoginAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("user")
+}
+
+model RiceEntitlement {
+  id              Int      @id @default(autoincrement())
+  familyId        Int      @unique
+  family          Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  monthlyQuotaKg  Decimal  @db.Decimal(8, 2)
+  unitPerMemberKg Decimal  @db.Decimal(8, 2)
+  effectiveFrom   DateTime
+  updatedAt       DateTime @updatedAt
+
+  @@map("riceentitlement")
+}
+
+model RiceDistribution {
+  id               Int      @id @default(autoincrement())
+  familyId         Int
+  family           Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  distributedKg    Decimal  @db.Decimal(8, 2)
+  remainingKg      Decimal  @db.Decimal(8, 2)
+  distributedBy    Int
+  distributionDate DateTime @default(now())
+  monthYear        String   @db.VarChar(10)
+  status           String   @default("COMPLETED") @db.VarChar(20)
+  notes            String?  @db.Text
+
+  @@map("ricedistribution")
+}
+
+model Notification {
+  id        Int     @id @default(autoincrement())
+  familyId  Int
+  family    Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  title     String  @db.VarChar(200)
+  message   String  @db.Text
+  type      String  @default("INFO") @db.VarChar(20)
+  isRead    Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notification")
+}
+
+model FaceProfile {
+  id              Int          @id @default(autoincrement())
+  familyMemberId  Int          @unique
+  familyMember    FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  faceImagePath   String       @db.VarChar(500)
+  faceEmbedding   String?      @db.Text
+  enrolledBy      Int
+  enrolledAt      DateTime     @default(now())
+  isActive        Boolean      @default(true)
+
+  @@map("faceprofile")
+}
+
+model SystemSetting {
+  id                                       Int      @id @default(autoincrement())
+  key                                      String   @unique @db.VarChar(100)
+  value                                    String   @db.Text
+  description                              String?  @db.VarChar(255)
+  updatedAt                                DateTime @updatedAt
+
+  @@map("systemsetting")
+}
