@@ -40,7 +40,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://smart-ration-api.onrender.com/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://smart-ration-system-1-lyda.onrender.com/api/v1/\"")
         }
         debug {
             buildConfigField("String", "BASE_URL", "\"http://10.32.112.131:5000/api/v1/\"")

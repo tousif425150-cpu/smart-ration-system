@@ -20,9 +20,6 @@ class AuthRepository @Inject constructor(
     suspend fun login(username: String, password: String): Result<LoginResponse> {
         return try {
             val response = apiService.login(LoginRequest(username, password))
-import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.tasks.await
-//...
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body?.status == "success" && body.data != null) {
