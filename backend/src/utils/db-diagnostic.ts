@@ -14,11 +14,21 @@ export interface DbDiagnostic {
   dnsResolved: boolean;
   tcpReachable: boolean;
   hostname_hint: string;
+  env_vars_found: string[];
+  url_length: number;
   error?: string;
 }
 
 export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
   const url = process.env.DATABASE_URL || '';
+
+  // Find all keys that might contain a DB URL
+  const env_vars_found = Object.keys(process.env).filter(key =>
+    key.toUpperCase().includes('DATABASE') ||
+    key.toUpperCase().includes('DB_') ||
+    key.toUpperCase().includes('URL')
+  );
+
   if (!url) {
     return {
       present: false,
@@ -28,7 +38,9 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       ssl: false,
       dnsResolved: false,
       tcpReachable: false,
-      hostname_hint: 'NONE'
+      hostname_hint: 'NONE',
+      url_length: 0,
+      env_vars_found
     };
   }
 
@@ -44,6 +56,8 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
         dnsResolved: false,
         tcpReachable: false,
         hostname_hint: 'INVALID',
+        url_length: url.length,
+        env_vars_found,
         error: 'Regex failed to parse URL'
       };
     }
@@ -53,7 +67,6 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
     const database = match[3];
     const ssl = url.includes('ssl-mode=REQUIRED') || url.includes('sslmode=require');
 
-    // Create a safe hint: "my...om"
     const hostname_hint = hostname.length > 8
       ? hostname.substring(0, 3) + '...' + hostname.substring(hostname.length - 3)
       : hostname;
@@ -61,7 +74,6 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
     let dnsResolved = false;
     let tcpReachable = false;
 
-    // DNS Check
     try {
       await lookupPromise(hostname);
       dnsResolved = true;
@@ -69,7 +81,6 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       dnsResolved = false;
     }
 
-    // TCP Check
     if (dnsResolved) {
       tcpReachable = await new Promise<boolean>((resolve) => {
         const socket = new net.Socket();
@@ -98,7 +109,9 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       ssl,
       dnsResolved,
       tcpReachable,
-      hostname_hint
+      hostname_hint,
+      url_length: url.length,
+      env_vars_found
     };
   } catch (e: any) {
     return {
@@ -110,6 +123,8 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       dnsResolved: false,
       tcpReachable: false,
       hostname_hint: 'ERROR',
+      url_length: url.length,
+      env_vars_found,
       error: e.message
     };
   }
