@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import path from 'path';
 import fs from 'fs';
 import { config } from './config';
-import { prisma } from './config/prisma';
+import { prisma, connectToDatabase } from './config/prisma';
 import { AppError } from './utils/AppError';
 import { errorHandler } from './middleware/errorHandler';
 import healthRoutes from './routes/healthRoutes';
@@ -92,18 +92,12 @@ app.all('*', (req: Request, _res: Response, next: NextFunction) => {
 app.use(errorHandler);
 
 const startServer = async () => {
-  // Production Database Check
-  if (config.nodeEnv === 'production') {
-    console.log('🔍 Checking database connectivity...');
-    try {
-      await prisma.$connect();
-      await prisma.$queryRaw`SELECT 1`;
-      console.log('✅ Database connected successfully.');
-    } catch (error: any) {
-      console.error('❌ CRITICAL: Database connection failed!');
-      console.error(`Reason: ${error.message}`);
-      // Don't exit here to allow health endpoint to report the error
-    }
+  // Database connection check with retries
+  const isConnected = await connectToDatabase();
+
+  if (!isConnected && config.nodeEnv === 'production') {
+    console.error('❌ CRITICAL: Could not establish database connection on startup.');
+    // We continue anyway so the health endpoint can report the error to the user/Render
   }
 
   const server = app.listen(config.port, '0.0.0.0', () => {
@@ -120,9 +114,12 @@ const startServer = async () => {
 
   process.on('unhandledRejection', (err: any) => {
     console.error('UNHANDLED REJECTION! 💥', err);
-    server.close(() => {
-      process.exit(1);
-    });
+    // Don't close immediately in production to allow for transient error recovery
+    if (config.nodeEnv !== 'production') {
+      server.close(() => {
+        process.exit(1);
+      });
+    }
   });
 
   process.on('SIGTERM', () => {

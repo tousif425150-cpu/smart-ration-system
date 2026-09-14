@@ -7,6 +7,7 @@ export const getHealth = async (_req: Request, res: Response) => {
   let dbStatus = 'disconnected';
   let dbError = null;
   try {
+    // Attempt a quick query
     await prisma.$queryRaw`SELECT 1`;
     dbStatus = 'connected';
   } catch (e: any) {
@@ -14,7 +15,8 @@ export const getHealth = async (_req: Request, res: Response) => {
     dbError = e.message;
   }
 
-  const dbInfo = getScrubbedDbInfo();
+  // Run async diagnostics
+  const dbDiagnostic = await getScrubbedDbInfo();
 
   res.status(200).json({
     status: 'success',
@@ -25,7 +27,7 @@ export const getHealth = async (_req: Request, res: Response) => {
       database: {
         status: dbStatus,
         error: dbError,
-        diagnostic: dbInfo
+        diagnostic: dbDiagnostic
       },
       environment: process.env.NODE_ENV,
       hostname: os.hostname(),
