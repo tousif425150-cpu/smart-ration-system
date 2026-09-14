@@ -21,7 +21,7 @@ export const getHealth = async (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
     message: 'Smart Ration System API is running',
-    version: '1.0.5',
+    version: '1.0.6',
     data: {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
