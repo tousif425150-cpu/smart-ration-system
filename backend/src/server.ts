@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import path from 'path';
 import fs from 'fs';
 import { config } from './config';
+import { prisma } from './config/prisma';
 import { AppError } from './utils/AppError';
 import { errorHandler } from './middleware/errorHandler';
 import healthRoutes from './routes/healthRoutes';
@@ -90,30 +91,48 @@ app.all('*', (req: Request, _res: Response, next: NextFunction) => {
 
 app.use(errorHandler);
 
-const server = app.listen(config.port, '0.0.0.0', () => {
-  console.log(`\n========================================`);
-  console.log(`🚀 Smart Ration System API - LIVE`);
-  console.log(`========================================`);
-  console.log(`📍 Environment : ${config.nodeEnv}`);
-  console.log(`📍 Database    : ${config.databaseUrl ? 'CONNECTED (URL Present)' : 'MISSING DATABASE_URL'}`);
-  console.log(`📍 CORS Origin : ${config.cors.adminPanelOrigin}`);
-  console.log(`📍 Server      : http://0.0.0.0:${config.port}`);
-  console.log(`📍 Health      : /api/v1/health`);
-  console.log(`========================================\n`);
-});
+const startServer = async () => {
+  // Production Database Check
+  if (config.nodeEnv === 'production') {
+    console.log('🔍 Checking database connectivity...');
+    try {
+      await prisma.$connect();
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('✅ Database connected successfully.');
+    } catch (error: any) {
+      console.error('❌ CRITICAL: Database connection failed!');
+      console.error(`Reason: ${error.message}`);
+      // Don't exit here to allow health endpoint to report the error
+    }
+  }
 
-process.on('unhandledRejection', (err: any) => {
-  console.error('UNHANDLED REJECTION! 💥', err);
-  server.close(() => {
-    process.exit(1);
+  const server = app.listen(config.port, '0.0.0.0', () => {
+    console.log(`\n========================================`);
+    console.log(`🚀 Smart Ration System API - LIVE`);
+    console.log(`========================================`);
+    console.log(`📍 Environment : ${config.nodeEnv}`);
+    console.log(`📍 Database    : ${config.databaseUrl ? 'URL PRESENT' : 'MISSING DATABASE_URL'}`);
+    console.log(`📍 CORS Origin : ${config.cors.adminPanelOrigin}`);
+    console.log(`📍 Server      : http://0.0.0.0:${config.port}`);
+    console.log(`📍 Health      : /api/v1/health`);
+    console.log(`========================================\n`);
   });
-});
 
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully.');
-  server.close(() => {
-    console.log('Process terminated!');
+  process.on('unhandledRejection', (err: any) => {
+    console.error('UNHANDLED REJECTION! 💥', err);
+    server.close(() => {
+      process.exit(1);
+    });
   });
-});
+
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received. Shutting down gracefully.');
+    server.close(() => {
+      console.log('Process terminated!');
+    });
+  });
+};
+
+startServer();
 
 export default app;

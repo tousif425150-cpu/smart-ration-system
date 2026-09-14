@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import os from 'os';
+import { getScrubbedDbInfo } from '../utils/db-diagnostic';
 
 export const getHealth = async (_req: Request, res: Response) => {
   let dbStatus = 'disconnected';
@@ -13,6 +14,8 @@ export const getHealth = async (_req: Request, res: Response) => {
     dbError = e.message;
   }
 
+  const dbInfo = getScrubbedDbInfo();
+
   res.status(200).json({
     status: 'success',
     message: 'Smart Ration System API is running',
@@ -22,7 +25,7 @@ export const getHealth = async (_req: Request, res: Response) => {
       database: {
         status: dbStatus,
         error: dbError,
-        urlPresent: !!process.env.DATABASE_URL
+        diagnostic: dbInfo
       },
       environment: process.env.NODE_ENV,
       hostname: os.hostname(),

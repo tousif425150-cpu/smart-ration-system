@@ -4,9 +4,15 @@ import path from 'path';
 // Load .env if present (works in local dev and won't hurt in production)
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+
+if (nodeEnv === 'production' && !process.env.DATABASE_URL) {
+  console.warn('⚠️ WARNING: DATABASE_URL is missing in production environment!');
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   databaseUrl: process.env.DATABASE_URL || '',
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback-secret-change-me',
