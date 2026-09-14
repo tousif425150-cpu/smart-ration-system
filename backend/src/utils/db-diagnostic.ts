@@ -13,6 +13,7 @@ export interface DbDiagnostic {
   ssl: boolean;
   dnsResolved: boolean;
   tcpReachable: boolean;
+  hostname_hint: string;
   error?: string;
 }
 
@@ -26,7 +27,8 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       database: 'MISSING',
       ssl: false,
       dnsResolved: false,
-      tcpReachable: false
+      tcpReachable: false,
+      hostname_hint: 'NONE'
     };
   }
 
@@ -41,6 +43,7 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
         ssl: false,
         dnsResolved: false,
         tcpReachable: false,
+        hostname_hint: 'INVALID',
         error: 'Regex failed to parse URL'
       };
     }
@@ -49,6 +52,11 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
     const port = match[2] || '3306';
     const database = match[3];
     const ssl = url.includes('ssl-mode=REQUIRED') || url.includes('sslmode=require');
+
+    // Create a safe hint: "my...om"
+    const hostname_hint = hostname.length > 8
+      ? hostname.substring(0, 3) + '...' + hostname.substring(hostname.length - 3)
+      : hostname;
 
     let dnsResolved = false;
     let tcpReachable = false;
@@ -89,7 +97,8 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       database,
       ssl,
       dnsResolved,
-      tcpReachable
+      tcpReachable,
+      hostname_hint
     };
   } catch (e: any) {
     return {
@@ -100,6 +109,7 @@ export const getScrubbedDbInfo = async (): Promise<DbDiagnostic> => {
       ssl: false,
       dnsResolved: false,
       tcpReachable: false,
+      hostname_hint: 'ERROR',
       error: e.message
     };
   }
