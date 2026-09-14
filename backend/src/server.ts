@@ -27,7 +27,7 @@ app.use(
         config.cors.adminPanelOrigin,
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-        'https://smart-ration-admin.onrender.com', // Placeholder for production admin
+        'https://smart-ration-admin.onrender.com',
       ];
       if (!origin || allowedOrigins.includes(origin) || config.nodeEnv === 'development') {
         callback(null, true);
@@ -91,13 +91,13 @@ app.use(errorHandler);
 
 const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`\n========================================`);
-  console.log(`🚀 Smart Ration System API - Stage 1`);
+  console.log(`🚀 Smart Ration System API - LIVE`);
   console.log(`========================================`);
   console.log(`📍 Environment : ${config.nodeEnv}`);
+  console.log(`📍 Database    : ${config.databaseUrl ? 'CONNECTED (URL Present)' : 'MISSING DATABASE_URL'}`);
+  console.log(`📍 CORS Origin : ${config.cors.adminPanelOrigin}`);
   console.log(`📍 Server      : http://0.0.0.0:${config.port}`);
-  console.log(`📍 Local       : http://localhost:${config.port}`);
-  console.log(`📍 Health      : http://localhost:${config.port}/api/v1/health`);
-  console.log(`📍 Ping        : http://localhost:${config.port}/api/v1/health/ping`);
+  console.log(`📍 Health      : /api/v1/health`);
   console.log(`========================================\n`);
 });
 
