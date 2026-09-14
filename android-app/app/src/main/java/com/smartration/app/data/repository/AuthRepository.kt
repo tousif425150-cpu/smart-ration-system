@@ -6,6 +6,8 @@ import com.smartration.app.data.model.LoginRequest
 import com.smartration.app.data.model.LoginResponse
 import com.smartration.app.data.remote.ApiService
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.gson.Gson
+import com.smartration.app.data.model.ApiResponse
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
@@ -45,7 +47,14 @@ class AuthRepository @Inject constructor(
                     Result.failure(Exception(body?.message ?: "Login failed"))
                 }
             } else {
-                Result.failure(Exception("Invalid credentials or server error"))
+                val errorBody = response.errorBody()?.string()
+                val message = try {
+                    // Try to extract message from error JSON if possible
+                    Gson().fromJson(errorBody, ApiResponse::class.java).message
+                } catch (e: Exception) {
+                    null
+                } ?: "Invalid credentials or server error"
+                Result.failure(Exception(message))
             }
         } catch (e: Exception) {
             Timber.e(e, "Login error")

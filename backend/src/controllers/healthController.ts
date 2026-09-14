@@ -4,11 +4,13 @@ import os from 'os';
 
 export const getHealth = async (_req: Request, res: Response) => {
   let dbStatus = 'disconnected';
+  let dbError = null;
   try {
     await prisma.$queryRaw`SELECT 1`;
     dbStatus = 'connected';
-  } catch (e) {
+  } catch (e: any) {
     dbStatus = 'disconnected';
+    dbError = e.message;
   }
 
   res.status(200).json({
@@ -17,7 +19,11 @@ export const getHealth = async (_req: Request, res: Response) => {
     data: {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      database: dbStatus,
+      database: {
+        status: dbStatus,
+        error: dbError,
+        urlPresent: !!process.env.DATABASE_URL
+      },
       environment: process.env.NODE_ENV,
       hostname: os.hostname(),
       memory: {

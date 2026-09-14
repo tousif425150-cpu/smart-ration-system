@@ -18,6 +18,7 @@ import downloadRoutes from './routes/downloadRoutes';
 
 const app = express();
 
+app.set('trust proxy', 1); // Required for Render/Cloudflare to get real client IP
 app.use(helmet());
 
 app.use(

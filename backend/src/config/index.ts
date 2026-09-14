@@ -1,10 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Only load .env if not in production (Render handles env vars directly)
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config({ path: path.join(process.cwd(), '.env') });
-}
+// Load .env if present (works in local dev and won't hurt in production)
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
