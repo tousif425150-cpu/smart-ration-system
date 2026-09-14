@@ -1,10 +1,13 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load .env if present (works in local dev and won't hurt in production)
-dotenv.config({ path: path.join(process.cwd(), '.env') });
-
 const nodeEnv = process.env.NODE_ENV || 'development';
+
+// ONLY load .env for local development.
+// In production (Render), always use the dashboard environment variables.
+if (nodeEnv !== 'production') {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
+}
 
 if (nodeEnv === 'production' && !process.env.DATABASE_URL) {
   console.warn('⚠️ WARNING: DATABASE_URL is missing in production environment!');

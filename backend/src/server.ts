@@ -102,9 +102,10 @@ const startServer = async () => {
 
   const server = app.listen(config.port, '0.0.0.0', () => {
     console.log(`\n========================================`);
-    console.log(`🚀 Smart Ration System API - LIVE`);
+    console.log(`🚀 Smart Ration System API - v1.0.3`);
     console.log(`========================================`);
     console.log(`📍 Environment : ${config.nodeEnv}`);
+    console.log(`📍 Build Date  : ${new Date().toISOString()}`);
     console.log(`📍 Database    : ${config.databaseUrl ? 'URL PRESENT' : 'MISSING DATABASE_URL'}`);
     console.log(`📍 CORS Origin : ${config.cors.adminPanelOrigin}`);
     console.log(`📍 Server      : http://0.0.0.0:${config.port}`);
