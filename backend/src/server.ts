@@ -102,7 +102,7 @@ const startServer = async () => {
 
   const server = app.listen(config.port, '0.0.0.0', () => {
     console.log(`\n========================================`);
-    console.log(`🚀 Smart Ration System API - v1.0.6`);
+    console.log(`🚀 Smart Ration System API - v1.0.7`);
     console.log(`========================================`);
     console.log(`📍 Environment : ${config.nodeEnv}`);
     console.log(`📍 Build Date  : ${new Date().toISOString()}`);
