@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -17,7 +17,7 @@ import {
 } from '../utils/validators';
 import { AuthRequest } from '../middleware/auth';
 
-const getClientIp = (req: any): string | undefined => {
+const getClientIp = (req: Request): string | undefined => {
   const xff = req.headers['x-forwarded-for'];
   if (Array.isArray(xff)) return xff[0];
   if (typeof xff === 'string') return xff.split(',')[0].trim();
